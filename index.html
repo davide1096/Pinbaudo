@@ -176,10 +176,10 @@ function onAmbientColorChange(value){
   ambientLight = [r,g,b];
 }
 function onSliderChange1(value){
-  dirLightAlpha = utils.degToRad(value);
+  dirLightAlpha = -utils.degToRad(value);
 }
 function onSliderChange2(value){
-  dirLightBeta = utils.degToRad(value);
+  dirLightBeta = -utils.degToRad(value);
 }
 before = 0.0;
 requestAnimationFrame(
