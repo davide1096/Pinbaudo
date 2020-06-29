@@ -58,7 +58,7 @@ var dirLightBeta;
 var soundON = true;
 
 var k_dissip  = 0.8;
-var k_dissip_pal = 0.95;
+var k_dissip_pal = 0.88;
 var nFrame = 0;
 
 // SHADER
@@ -84,16 +84,16 @@ uniform float SpecShine;
 
 void main() {
   uvFS = a_uv;
-  vec3 fsNormal = (worldviewmatrix_t * vec4(inNormal,0.0)).xyz;
+  vec3 fsNormal = mat3(worldviewmatrix_t) * inNormal;
   //diffuse
-  vec3 diffuse = mDiffColor * max(dot(normalize(fsNormal), lightDirection), 0.0);
+  vec3 diffuse = mDiffColor * clamp(dot(normalize(fsNormal), lightDirection), 0.0, 1.0);
   // specular
   //in camera space eyePos = [0,0,0] so eyeDir = normalize(-inPosition)
   //inPosition è in object space quindi dobbiamo passare una matrice worldview da moltiplicare
 	vec3 eyeDir = normalize( - (worldviewmatrix * vec4(inPosition,1.0)).xyz);
-	vec3 reflectDir = normalize(reflect(-lightDirection, fsNormal));
+	vec3 reflectDir = normalize(-reflect(lightDirection, fsNormal));
   specular = specularColor * pow(clamp(dot(eyeDir, reflectDir), 0.0, 1.0),SpecShine);
-  finalColor = vec4(clamp((diffuse * lightColor) + specular + ambientLightcolor, 0.0, 1.0),1.0);
+  finalColor = vec4(clamp((diffuse * lightColor) + ambientLightcolor, 0.0, 1.0),1.0);
   gl_Position = matrix * vec4(inPosition, 1.0);
 }`;
 
@@ -137,8 +137,8 @@ async function main(){
   var bumpModel = new OBJ.Mesh(bumpObjStr);
 
   // LIGHTS
-  dirLightAlpha = utils.degToRad(50);
-  dirLightBeta  = utils.degToRad(100);
+  dirLightAlpha = -utils.degToRad(50);
+  dirLightBeta  = -utils.degToRad(100);
   ambientLight = [0.2,0.2,0.2];
   var directionalLight = [-Math.cos(dirLightAlpha) * Math.cos(dirLightBeta),
             -Math.sin(dirLightAlpha),
@@ -342,7 +342,7 @@ async function main(){
     }
 
     //Wall collisions
-    collision.checkBoundaries(ball, wallL, wallR, wallU, wallD);
+    collision.checkBoundaries(ball, wallL, wallR, wallU, wallD, paletteL, paletteR);
 
     deltax_ball = (ball.vel[0]*deltaT) / 1000.0;
     deltay_ball = (ball.vel[1]*deltaT) / 1000.0;
@@ -410,9 +410,9 @@ async function main(){
 
 
     //CAMERA SPACE
-    directionalLight = [Math.cos(dirLightAlpha) * Math.cos(dirLightBeta),
-              Math.sin(dirLightAlpha),
-              Math.cos(dirLightAlpha) * Math.sin(dirLightBeta)
+    directionalLight = [-Math.cos(dirLightAlpha) * Math.cos(dirLightBeta),
+              -Math.sin(dirLightAlpha),
+              -Math.cos(dirLightAlpha) * Math.sin(dirLightBeta)
               ];
     var lightDirMatrix = utils.invertMatrix(utils.transposeMatrix(viewMatrix));
     var lightDirectionTransformed = utils.multiplyMatrix3Vector3(utils.sub3x3from4x4(lightDirMatrix),directionalLight);
